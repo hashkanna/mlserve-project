@@ -10,5 +10,6 @@ dependencies = [
   "torch",
   "torchvision",
   "transformers",
-  "ray[serve]"
+  "ray[serve]",
+  "captum"
 ]
