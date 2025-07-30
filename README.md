@@ -187,6 +187,9 @@ The integrated model registry allows dynamic model management:
 
 The MLServe Web UI provides an interactive dashboard perfect for demos and monitoring:
 
+![MLServe Web UI](assets/ui-screenshot.png)
+*Interactive dashboard showing image classification, load testing, and real-time metrics*
+
 ### Features
 - **🖼️ Image Classification**: Drag & drop image upload with real-time predictions
 - **📊 Load Testing**: Visual load testing with autoscaling demonstration  
@@ -194,9 +197,9 @@ The MLServe Web UI provides an interactive dashboard perfect for demos and monit
 - **🎛️ System Monitoring**: Live status of API, Ray cluster, and replicas
 - **📝 Request Logs**: Real-time logging of all requests and responses
 
-### Screenshots
+### Key UI Components
 - **Dashboard Overview**: System status, metrics, and controls
-- **Image Classification**: Upload images and see predictions with confidence bars
+- **Image Classification**: Upload images and see predictions with confidence bars  
 - **Load Testing**: Generate concurrent requests and watch autoscaling
 - **Performance Charts**: Visualize latency and throughput over time
 
