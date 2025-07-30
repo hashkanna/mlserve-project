@@ -1,7 +1,5 @@
 """Configuration settings for MLServe project."""
 
-from pathlib import Path
-from typing import Optional
 from pydantic_settings import BaseSettings
 
 
@@ -14,13 +12,7 @@ class Settings(BaseSettings):
     api_prefix: str = "/api/v1"
     
     # Model Settings
-    model_store_path: Path = Path("models/store")
     default_model: str = "resnet18"
-    
-    # TorchServe Settings
-    torchserve_inference_port: int = 8080
-    torchserve_management_port: int = 8081
-    torchserve_metrics_port: int = 8082
     
     # Ray Serve Settings
     ray_serve_port: int = 8000

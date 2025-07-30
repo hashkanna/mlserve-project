@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLServe Dashboard - Ray Serve Demo</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 24px 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .status-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 16px 24px;
+            flex: 1;
+            min-width: 200px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .status-icon.healthy { background: #10b981; }
+        .status-icon.warning { background: #f59e0b; }
+        .status-icon.error { background: #ef4444; }
+
+        .status-content h3 {
+            font-size: 0.875rem;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .status-content p {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .card h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .upload-area p {
+            color: #666;
+            margin-bottom: 12px;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: transform 0.2s ease;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .sample-images {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+
+        .sample-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+            object-fit: cover;
+            display: inline-block;
+        }
+
+        .sample-image:hover {
+            border-color: #667eea;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .sample-image div {
+            font-size: 32px;
+            user-select: none;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .prediction-results {
+            margin-top: 20px;
+        }
+
+        .prediction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .prediction-item:last-child {
+            border-bottom: none;
+        }
+
+        .prediction-bar {
+            width: 100px;
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .prediction-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #34d399);
+            transition: width 0.5s ease;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 4px;
+        }
+
+        .metric-label {
+            color: #666;
+            font-size: 0.875rem;
+        }
+
+        .load-test-controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+
+        .log-container {
+            background: #1f2937;
+            border-radius: 8px;
+            padding: 16px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.875rem;
+        }
+
+        .log-entry {
+            color: #d1d5db;
+            margin-bottom: 4px;
+        }
+
+        .log-entry.success { color: #10b981; }
+        .log-entry.error { color: #ef4444; }
+        .log-entry.info { color: #3b82f6; }
+
+        .bottom-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .model-list {
+            list-style: none;
+        }
+
+        .model-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .model-info h3 {
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .model-info p {
+            color: #666;
+            font-size: 0.875rem;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-badge.ready {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .image-preview {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 8px;
+            margin: 16px 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .main-grid, .bottom-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .status-bar {
+                flex-direction: column;
+            }
+            
+            .load-test-controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>MLServe Dashboard</h1>
+            <p>Ray Serve Powered ML Inference Platform</p>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-card">
+                <div class="status-icon healthy" id="api-status-icon">
+                    <i data-lucide="server"></i>
+                </div>
+                <div class="status-content">
+                    <h3>API Status</h3>
+                    <p id="api-status">Loading...</p>
+                </div>
+            </div>
+            <div class="status-card">
+                <div class="status-icon healthy" id="ray-status-icon">
+                    <i data-lucide="zap"></i>
+                </div>
+                <div class="status-content">
+                    <h3>Ray Cluster</h3>
+                    <p id="ray-status">Loading...</p>
+                </div>
+            </div>
+            <div class="status-card">
+                <div class="status-icon healthy" id="replicas-icon">
+                    <i data-lucide="layers"></i>
+                </div>
+                <div class="status-content">
+                    <h3>Active Replicas</h3>
+                    <p id="replicas-count">Loading...</p>
+                </div>
+            </div>
+            <div class="status-card">
+                <div class="status-icon healthy" id="cpu-icon">
+                    <i data-lucide="cpu"></i>
+                </div>
+                <div class="status-content">
+                    <h3>CPU Usage</h3>
+                    <p id="cpu-usage">Loading...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Image Classification -->
+            <div class="card">
+                <h2>
+                    <i data-lucide="image"></i>
+                    Image Classification
+                </h2>
+                
+                <div class="upload-area" id="upload-area">
+                    <i data-lucide="upload" style="width: 48px; height: 48px; color: #667eea; margin-bottom: 12px;"></i>
+                    <p>Drag & drop an image here, or click to select</p>
+                    <button class="upload-btn" onclick="document.getElementById('file-input').click()">
+                        Choose Image
+                    </button>
+                    <input type="file" id="file-input" accept="image/*" style="display: none;">
+                </div>
+
+                <div class="sample-images">
+                    <div class="sample-image" onclick="useSampleImage(1)" title="Golden Retriever">
+                        <div style="background: linear-gradient(45deg, #FFB74D, #FF8A65); width: 80px; height: 80px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; cursor: pointer;">🐕</div>
+                    </div>
+                    <div class="sample-image" onclick="useSampleImage(2)" title="Sports Car">
+                        <div style="background: linear-gradient(45deg, #64B5F6, #42A5F5); width: 80px; height: 80px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; cursor: pointer;">🚗</div>
+                    </div>
+                    <div class="sample-image" onclick="useSampleImage(3)" title="Coffee Cup">
+                        <div style="background: linear-gradient(45deg, #8BC34A, #66BB6A); width: 80px; height: 80px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; cursor: pointer;">☕</div>
+                    </div>
+                </div>
+
+                <img id="image-preview" class="image-preview hidden" alt="Preview">
+
+                <div class="prediction-results" id="prediction-results">
+                    <!-- Predictions will be displayed here -->
+                </div>
+            </div>
+
+            <!-- Load Testing -->
+            <div class="card">
+                <h2>
+                    <i data-lucide="activity"></i>
+                    Autoscaling Demo
+                </h2>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value" id="total-requests">0</div>
+                        <div class="metric-label">Total Requests</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="avg-latency">0ms</div>
+                        <div class="metric-label">Avg Latency</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="success-rate">100%</div>
+                        <div class="metric-label">Success Rate</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="rps">0</div>
+                        <div class="metric-label">Req/Sec</div>
+                    </div>
+                </div>
+
+                <div class="load-test-controls">
+                    <button id="light-load-btn" class="btn btn-secondary" onclick="startLoadTest('light')">
+                        Light Load (5 req)
+                    </button>
+                    <button id="heavy-load-btn" class="btn btn-primary" onclick="startLoadTest('heavy')">
+                        Heavy Load (20 req)
+                    </button>
+                    <button id="stop-btn" class="btn btn-secondary" onclick="stopLoadTest()" disabled>
+                        Stop Test
+                    </button>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="load-progress" style="width: 0%;"></div>
+                </div>
+
+                <div class="log-container" id="load-logs">
+                    <div class="log-entry info">Ready to start load testing...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Grid -->
+        <div class="bottom-grid">
+            <!-- Performance Chart -->
+            <div class="card">
+                <h2>
+                    <i data-lucide="trending-up"></i>
+                    Performance Metrics
+                </h2>
+                <div class="chart-container">
+                    <canvas id="performance-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Model Registry -->
+            <div class="card">
+                <h2>
+                    <i data-lucide="database"></i>
+                    Model Registry
+                </h2>
+                <ul class="model-list" id="model-list">
+                    <!-- Models will be loaded here -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>

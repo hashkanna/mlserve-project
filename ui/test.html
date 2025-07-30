@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MLServe API Test</title>
+</head>
+<body>
+    <h1>MLServe API Test</h1>
+    <button onclick="testHealth()">Test Health</button>
+    <button onclick="testPredict()">Test Predict</button>
+    <div id="results"></div>
+
+    <script>
+        async function testHealth() {
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/health');
+                const data = await response.json();
+                document.getElementById('results').innerHTML = 
+                    '<h3>Health Test:</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            } catch (error) {
+                document.getElementById('results').innerHTML = 
+                    '<h3>Health Test Error:</h3><p>' + error.message + '</p>';
+            }
+        }
+
+        async function testPredict() {
+            try {
+                const payload = {
+                    model: 'resnet18',
+                    data: [[0.5, 0.5, 0.5, 0.5, 0.5]]
+                };
+
+                console.log('Sending payload:', payload);
+
+                const response = await fetch('http://localhost:8000/api/v1/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                console.log('Response status:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('results').innerHTML = 
+                        '<h3>Predict Test Success:</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                } else {
+                    const errorText = await response.text();
+                    document.getElementById('results').innerHTML = 
+                        '<h3>Predict Test Error:</h3><p>Status: ' + response.status + '</p><pre>' + errorText + '</pre>';
+                }
+            } catch (error) {
+                document.getElementById('results').innerHTML = 
+                    '<h3>Predict Test Error:</h3><p>' + error.message + '</p>';
+            }
+        }
+    </script>
+</body>
+</html>
