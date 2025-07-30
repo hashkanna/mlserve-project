@@ -48,7 +48,12 @@ mlserve-project/
 │       └── ray_config.py # Ray Serve configurations
 ├── tests/                # Test suite
 ├── ui/                   # Web UI dashboard
-└── demo files            # Demo scripts and utilities
+├── demo_interview.py     # Interview demo script
+├── test_ray_serve.py     # Ray Serve integration tests
+├── start_demo.sh         # One-click demo launcher
+├── stop_demo.sh          # Demo shutdown script
+├── serve_ui.py           # UI server launcher
+└── main.py               # Application entry point
 ```
 
 ## Installation
